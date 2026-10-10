@@ -1,4 +1,4 @@
-﻿import queue
+import queue
 import threading
 import tkinter as tk
 from pathlib import Path
@@ -11,8 +11,8 @@ class TakeoutWindow(tk.Toplevel):
     def __init__(self, parent: tk.Tk) -> None:
         super().__init__(parent)
         self.title("Google Photos Takeout Fixer")
-        self.geometry("750x650")
-        self.minsize(650, 550)
+        self.geometry("750x750")
+        self.minsize(650, 650)
         self.transient(parent) # Makes it float over the parent
         self.grab_set()        # Modal window
         
