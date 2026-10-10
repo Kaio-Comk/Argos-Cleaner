@@ -84,6 +84,13 @@ class TakeoutWindow(tk.Toplevel):
         # 4. Ação Final
         self.btn_apply = ttk.Button(mid, text="2º Passo: Aplicar Correções (Irreversível)", command=self.apply_fixes, state="disabled")
         self.btn_apply.pack(pady=(15, 0))
+        
+        self.bar_apply = ttk.Progressbar(mid, mode="determinate", length=400)
+        self.lbl_eta = ttk.Label(mid, text="", font=("Segoe UI", 9))
+        self.bar_apply.pack(pady=(15, 5))
+        self.lbl_eta.pack()
+        self.bar_apply.pack_forget()
+        self.lbl_eta.pack_forget()
 
     def add_folder(self) -> None:
         d = filedialog.askdirectory(title="Escolha a pasta do Takeout")
@@ -141,9 +148,35 @@ class TakeoutWindow(tk.Toplevel):
         self.btn_apply.config(state="disabled", text="Aplicando...")
         self.update()
         
+        self.bar_apply.pack(pady=(15, 5))
+        self.lbl_eta.pack()
+        self.bar_apply["value"] = 0
+        self.bar_apply["maximum"] = 100
+        self.lbl_eta.config(text="Iniciando...")
+        
+        import time
+        start_time = time.time()
+        
+        def cb_progress(current, total):
+            pct = int((current / total) * 100) if total else 100
+            elapsed = time.time() - start_time
+            if current > 0 and elapsed > 0:
+                speed = current / elapsed
+                rem_sec = (total - current) / speed
+                mins, secs = divmod(int(rem_sec), 60)
+                eta_str = f"Restante: {mins}m {secs}s"
+            else:
+                eta_str = "Calculando..."
+            
+            self.after(0, lambda: _update_ui(pct, eta_str, current, total))
+
+        def _update_ui(pct, eta_str, current, total):
+            self.bar_apply["value"] = pct
+            self.lbl_eta.config(text=f"Processando: {pct}% ({current}/{total}) | {eta_str}")
+
         def work():
             try:
-                rep = apply_takeout(self.scan_res, opts, apply=True)
+                rep = apply_takeout(self.scan_res, opts, apply=True, progress=cb_progress)
                 msg = f"Sucesso!\n\n📅 Datas de arquivo alteradas: {rep.dates_set}\n📸 Tags EXIF gravadas: {rep.exif_written}\n📦 Arquivos JSON movidos: {rep.sidecars_moved}"
                 if rep.errors:
                     msg += f"\n\nOcorreram {len(rep.errors)} erros (veja o terminal para mais detalhes)."
@@ -151,6 +184,8 @@ class TakeoutWindow(tk.Toplevel):
             except Exception as e:
                 messagebox.showerror("Erro", str(e))
             finally:
+                self.after(0, lambda: self.bar_apply.pack_forget())
+                self.after(0, lambda: self.lbl_eta.pack_forget())
                 self.btn_apply.config(state="normal", text="2º Passo: Aplicar Correções (Irreversível)")
                 self.scan_res = None
                 self.status.config(text="Limpeza concluída. Analise novamente se desejar processar mais fotos.")
