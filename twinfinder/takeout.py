@@ -263,44 +263,80 @@ def apply_takeout(scan: TakeoutScan, opts: ApplyOptions, *, apply: bool = False,
     exe = find_exiftool(opts.exiftool) if opts.exif else None
     if opts.exif and not exe:
         raise RuntimeError("ExifTool not found: put exiftool.exe next to the program or pass its path")
+    
     cache: dict[Path, Optional[Sidecar]] = {}
     ok_sidecars: dict[Path, bool] = {}
-    for i, (media, side) in enumerate(scan.pairs, 1):
-        if progress:
-            progress(i, len(scan.pairs))
-        sc = cache.setdefault(side, parse_sidecar(side))
-        if sc is None:
-            rep.errors.append(f"{media.name}: unreadable sidecar")
-            ok_sidecars[side] = False
-            continue
-        kind = "video" if media.suffix.lower() in VIDEO_EXT else "image"
-        target = media
-        good = True
-        try:
-            if opts.exif and sc:
-                if apply:
-                    if opts.out_dir:
-                        target = Path(opts.out_dir) / media.name
-                        target.parent.mkdir(parents=True, exist_ok=True)
-                        shutil.copy2(media, target)
-                    cmd = [exe, "-m", "-q", "-q", *exiftool_args(sc, kind, only_missing=opts.only_missing)]
-                    if opts.out_dir or not opts.keep_exiftool_backup:
-                        cmd.append("-overwrite_original")
-                    kw = {}
-                    if sys.platform == "win32":
-                        kw["creationflags"] = 0x08000000  # CREATE_NO_WINDOW
-                    r = subprocess.run([*cmd, str(target)], capture_output=True, text=True, timeout=300, **kw)
-                    if r.returncode != 0:
-                        raise RuntimeError(r.stderr.strip() or f"exiftool exit {r.returncode}")
-                rep.exif_written += 1
-            if opts.set_dates and sc.taken:
-                if apply:
-                    set_file_times(target, sc.taken)
-                rep.dates_set += 1
-        except (OSError, RuntimeError, subprocess.SubprocessError) as exc:
-            good = False
-            rep.errors.append(f"{media.name}: {exc}")
-        ok_sidecars[side] = ok_sidecars.get(side, True) and good
+    
+    exe_proc = None
+    if apply and opts.exif:
+        kw = {}
+        if sys.platform == "win32":
+            kw["creationflags"] = 0x08000000
+        # -charset filename=utf8 is important for special chars in paths on Windows
+        exe_proc = subprocess.Popen([exe, "-charset", "filename=utf8", "-stay_open", "True", "-@", "-"], 
+                                    stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, 
+                                    text=True, encoding="utf-8", **kw)
+
+    try:
+        for i, (media, side) in enumerate(scan.pairs, 1):
+            if progress:
+                progress(i, len(scan.pairs))
+            sc = cache.setdefault(side, parse_sidecar(side))
+            if sc is None:
+                rep.errors.append(f"{media.name}: unreadable sidecar")
+                ok_sidecars[side] = False
+                continue
+            kind = "video" if media.suffix.lower() in VIDEO_EXT else "image"
+            target = media
+            good = True
+            try:
+                if opts.exif and sc:
+                    if apply:
+                        if opts.out_dir:
+                            target = Path(opts.out_dir) / media.name
+                            target.parent.mkdir(parents=True, exist_ok=True)
+                            shutil.copy2(media, target)
+                        
+                        cmd = ["-m", "-q", "-q", *exiftool_args(sc, kind, only_missing=opts.only_missing)]
+                        if opts.out_dir or not opts.keep_exiftool_backup:
+                            cmd.append("-overwrite_original")
+                        cmd.append(str(target))
+                        cmd.append(f"-execute{i}\n")
+                        
+                        exe_proc.stdin.write("\n".join(cmd) + "\n")
+                        exe_proc.stdin.flush()
+                        
+                        # Wait for {ready}
+                        out = ""
+                        while True:
+                            line = exe_proc.stdout.readline()
+                            if not line: break
+                            out += line
+                            if f"{{ready{i}}}" in line: break
+                        
+                        # We used -q -q so there should be no output unless there's a serious error
+                        # Note: Exiftool returns errors in stdout when stderr=STDOUT
+                        err = out.replace(f"{{ready{i}}}\n", "").strip()
+                        if err and "Error" in err:
+                            raise RuntimeError(err)
+                            
+                    rep.exif_written += 1
+                if opts.set_dates and sc.taken:
+                    if apply:
+                        set_file_times(target, sc.taken)
+                    rep.dates_set += 1
+            except (OSError, RuntimeError, subprocess.SubprocessError) as exc:
+                good = False
+                rep.errors.append(f"{media.name}: {exc}")
+            ok_sidecars[side] = ok_sidecars.get(side, True) and good
+    finally:
+        if exe_proc:
+            try:
+                exe_proc.stdin.write("-stay_open\nFalse\n")
+                exe_proc.stdin.flush()
+                exe_proc.wait(timeout=5)
+            except:
+                exe_proc.kill()
 
     if opts.move_sidecars_to:
         dest = Path(opts.move_sidecars_to)
@@ -321,3 +357,4 @@ def apply_takeout(scan: TakeoutScan, opts: ApplyOptions, *, apply: bool = False,
                     continue
             rep.sidecars_moved += 1
     return rep
+
