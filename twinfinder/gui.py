@@ -8,6 +8,7 @@ import subprocess
 import sys
 import threading
 import tkinter as tk
+import sv_ttk
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 from typing import Optional
@@ -75,6 +76,10 @@ class App(tk.Tk):
             "sens": tk.StringVar(value="Normal"), "keep": tk.StringVar(value="Maior resolução"),
         }
         self._build()
+        try:
+            sv_ttk.set_theme("dark")
+        except:
+            pass
         self._build_menu()
         self.after(100, self._poll)
 
@@ -91,71 +96,85 @@ class App(tk.Tk):
 
     # ── layout ─────────────────────────────────────────────────────────────────
     def _build(self) -> None:
-        pad = {"padx": 8, "pady": 4}
-        top = ttk.LabelFrame(self, text="1. Pastas para analisar")
-        top.pack(fill="x", **pad)
-        self.lb = tk.Listbox(top, height=3)
-        self.lb.pack(side="left", fill="x", expand=True, padx=6, pady=6)
-        col = ttk.Frame(top)
-        col.pack(side="left", padx=6)
-        ttk.Button(col, text="Adicionar pasta…", command=self.add_folder).pack(fill="x", pady=2)
-        ttk.Button(col, text="Remover", command=self.remove_folder).pack(fill="x", pady=2)
+        pad = {"padx": 15, "pady": 10}
+        
+        # Style
+        main_frame = ttk.Frame(self, padding="15 15 15 15")
+        main_frame.pack(fill="both", expand=True)
 
-        opt = ttk.LabelFrame(self, text="2. Opções")
-        opt.pack(fill="x", **pad)
-        ttk.Checkbutton(opt, text="Fotos parecidas (mesma foto redimensionada/recomprimida)",
-                        variable=self.vars["images"]).grid(row=0, column=0, sticky="w", padx=6, pady=2)
-        self.chk_video = ttk.Checkbutton(opt, text="Vídeos parecidos (precisa do ffmpeg)",
-                                         variable=self.vars["videos"])
-        self.chk_video.grid(row=1, column=0, sticky="w", padx=6, pady=2)
+        # 1. Pastas
+        ttk.Label(main_frame, text="1. Onde procurar?", font=("Segoe UI", 12, "bold")).pack(anchor="w", pady=(0, 5))
+        top = ttk.Frame(main_frame)
+        top.pack(fill="x", pady=(0, 15))
+        
+        self.lb = tk.Listbox(top, height=3, relief="flat", borderwidth=1, highlightthickness=1)
+        self.lb.pack(side="left", fill="x", expand=True, padx=(0, 10))
+        
+        col = ttk.Frame(top)
+        col.pack(side="left")
+        ttk.Button(col, text="Adicionar pasta…", command=self.add_folder, width=20).pack(fill="x", pady=(0, 5))
+        ttk.Button(col, text="Remover", command=self.remove_folder, width=20).pack(fill="x")
+
+        # 2. Opções
+        ttk.Label(main_frame, text="2. O que procurar?", font=("Segoe UI", 12, "bold")).pack(anchor="w", pady=(0, 5))
+        opt = ttk.Frame(main_frame)
+        opt.pack(fill="x", pady=(0, 15))
+        
+        ttk.Checkbutton(opt, text="Fotos parecidas (mesma foto redimensionada)", variable=self.vars["images"]).grid(row=0, column=0, sticky="w", pady=4)
+        self.chk_video = ttk.Checkbutton(opt, text="Vídeos parecidos (precisa do ffmpeg)", variable=self.vars["videos"])
+        self.chk_video.grid(row=1, column=0, sticky="w", pady=4)
         if not ffmpeg_available():
             self.chk_video.state(["disabled"])
             self.vars["videos"].set(False)
-            ttk.Label(opt, text="ffmpeg não encontrado: ponha ffmpeg.exe e ffprobe.exe ao lado deste programa.",
-                      foreground="#a15c00").grid(row=2, column=0, columnspan=3, sticky="w", padx=6)
-        ttk.Label(opt, text="Sensibilidade:").grid(row=0, column=1, sticky="e", padx=6)
-        ttk.Combobox(opt, textvariable=self.vars["sens"], values=list(SENSITIVITY), state="readonly",
-                     width=34).grid(row=0, column=2, sticky="w")
-        ttk.Label(opt, text="Manter o:").grid(row=1, column=1, sticky="e", padx=6)
-        cb = ttk.Combobox(opt, textvariable=self.vars["keep"], values=list(KEEP_CHOICES),
-                          state="readonly", width=34)
+            ttk.Label(opt, text="ffmpeg não encontrado.", foreground="#a15c00").grid(row=2, column=0, sticky="w")
+            
+        ttk.Label(opt, text="Sensibilidade:").grid(row=0, column=1, sticky="e", padx=(40, 10))
+        ttk.Combobox(opt, textvariable=self.vars["sens"], values=list(SENSITIVITY), state="readonly", width=30).grid(row=0, column=2, sticky="w")
+        
+        ttk.Label(opt, text="Manter automaticamente:").grid(row=1, column=1, sticky="e", padx=(40, 10))
+        cb = ttk.Combobox(opt, textvariable=self.vars["keep"], values=list(KEEP_CHOICES), state="readonly", width=30)
         cb.grid(row=1, column=2, sticky="w")
         cb.bind("<<ComboboxSelected>>", lambda e: self._remark())
-        opt.columnconfigure(3, weight=1)
 
-        run = ttk.Frame(self)
-        run.pack(fill="x", **pad)
-        self.btn_scan = ttk.Button(run, text="Procurar duplicados", command=self.start_scan)
+        # Start Scan
+        run = ttk.Frame(main_frame)
+        run.pack(fill="x", pady=(0, 15))
+        self.btn_scan = ttk.Button(run, text="Procurar Duplicados", command=self.start_scan, style="Accent.TButton")
         self.btn_scan.pack(side="left")
         self.btn_cancel = ttk.Button(run, text="Cancelar", command=self.cancel_scan, state="disabled")
-        self.btn_cancel.pack(side="left", padx=6)
-        self.bar = ttk.Progressbar(run, mode="indeterminate", length=220)
-        self.bar.pack(side="left", padx=8)
-        self.status = ttk.Label(run, text="Escolha uma ou mais pastas e clique em “Procurar duplicados”.")
-        self.status.pack(side="left", padx=8)
+        self.btn_cancel.pack(side="left", padx=10)
+        self.bar = ttk.Progressbar(run, mode="indeterminate", length=200)
+        self.bar.pack(side="left", padx=10)
+        self.status = ttk.Label(run, text="Escolha as pastas e inicie a busca.", foreground="#888")
+        self.status.pack(side="left", padx=10)
 
-        mid = ttk.LabelFrame(self, text="3. Revise: dê dois cliques num arquivo para alternar Manter/Remover")
-        mid.pack(fill="both", expand=True, **pad)
+        # 3. Revisão
+        ttk.Label(main_frame, text="3. Revise e Limpe", font=("Segoe UI", 12, "bold")).pack(anchor="w", pady=(0, 5))
+        mid = ttk.Frame(main_frame)
+        mid.pack(fill="both", expand=True, pady=(0, 15))
+        
         cols = ("size", "kind", "action")
         self.tree = ttk.Treeview(mid, columns=cols, show="tree headings", selectmode="browse")
-        self.tree.heading("#0", text="Arquivo")
+        self.tree.heading("#0", text="Arquivo (Dois cliques para Manter/Remover)")
         self.tree.heading("size", text="Tamanho")
         self.tree.heading("kind", text="Tipo")
         self.tree.heading("action", text="O que fazer")
-        self.tree.column("#0", width=560)
-        self.tree.column("size", width=90, anchor="e")
+        self.tree.column("#0", width=450)
+        self.tree.column("size", width=80, anchor="e")
         self.tree.column("kind", width=80)
-        self.tree.column("action", width=90)
-        self.tree.tag_configure("remove", foreground="#b00020")
-        self.tree.tag_configure("keep", foreground="#1b6e2d")
+        self.tree.column("action", width=80)
+        self.tree.tag_configure("remove", foreground="#ff6b6b")
+        self.tree.tag_configure("keep", foreground="#51cf66")
         self.tree.tag_configure("group", font=("Segoe UI", 9, "bold"))
+        
         sb = ttk.Scrollbar(mid, command=self.tree.yview)
         self.tree.configure(yscrollcommand=sb.set)
         self.tree.pack(side="left", fill="both", expand=True)
         sb.pack(side="left", fill="y")
-        self.preview = ttk.Label(mid, text="Selecione um arquivo\npara ver a prévia", anchor="center",
-                                 width=40, justify="center")
-        self.preview.pack(side="left", fill="y", padx=8)
+        
+        self.preview = ttk.Label(mid, text="Prévia", anchor="center", width=35, justify="center", background="#1e1e1e")
+        self.preview.pack(side="left", fill="y", padx=(10, 0))
+        
         self.tree.bind("<Double-1>", self._on_double)
         self.tree.bind("<<TreeviewSelect>>", self._on_select)
         self.tree.bind("<Button-3>", self._on_right)
@@ -163,21 +182,23 @@ class App(tk.Tk):
         self.menu.add_command(label="Alternar Manter/Remover", command=self._toggle_selected)
         self.menu.add_command(label="Mostrar na pasta", command=self._reveal_selected)
 
-        bot = ttk.LabelFrame(self, text="4. Limpar (nada é apagado de vez)")
-        bot.pack(fill="x", **pad)
-        ttk.Checkbutton(bot, text="Marcar também os grupos “parecidos” automaticamente",
-                        variable=self.vars["mark_similar"], command=self._remark).grid(
-            row=0, column=0, columnspan=3, sticky="w", padx=6, pady=2)
-        ttk.Radiobutton(bot, text="Mover para a quarentena:", value="quarantine",
-                        variable=self.vars["action"]).grid(row=1, column=0, sticky="w", padx=6)
-        ttk.Entry(bot, textvariable=self.quarantine, width=60).grid(row=1, column=1, sticky="we")
-        ttk.Button(bot, text="Escolher…", command=self.pick_quarantine).grid(row=1, column=2, padx=6)
-        ttk.Radiobutton(bot, text="Enviar para a Lixeira", value="trash",
-                        variable=self.vars["action"]).grid(row=2, column=0, sticky="w", padx=6)
-        self.summary_lbl = ttk.Label(bot, text="")
-        self.summary_lbl.grid(row=3, column=0, columnspan=2, sticky="w", padx=6, pady=4)
-        self.btn_clean = ttk.Button(bot, text="Limpar selecionados…", command=self.clean, state="disabled")
-        self.btn_clean.grid(row=3, column=2, padx=6, pady=4)
+        # 4. Limpar
+        bot = ttk.Frame(main_frame)
+        bot.pack(fill="x")
+        
+        ttk.Checkbutton(bot, text="Marcar grupos parecidos automaticamente", variable=self.vars["mark_similar"], command=self._remark).grid(row=0, column=0, columnspan=3, sticky="w", pady=4)
+        
+        ttk.Radiobutton(bot, text="Quarentena:", value="quarantine", variable=self.vars["action"]).grid(row=1, column=0, sticky="w")
+        ttk.Entry(bot, textvariable=self.quarantine, width=50).grid(row=1, column=1, sticky="we", padx=10)
+        ttk.Button(bot, text="Escolher…", command=self.pick_quarantine).grid(row=1, column=2)
+        
+        ttk.Radiobutton(bot, text="Lixeira", value="trash", variable=self.vars["action"]).grid(row=2, column=0, sticky="w", pady=(10, 0))
+        
+        self.summary_lbl = ttk.Label(bot, text="", font=("Segoe UI", 10, "bold"), foreground="#ccc")
+        self.summary_lbl.grid(row=3, column=0, columnspan=2, sticky="w", pady=(10, 0))
+        
+        self.btn_clean = ttk.Button(bot, text="Limpar Selecionados", command=self.clean, state="disabled", style="Accent.TButton")
+        self.btn_clean.grid(row=3, column=2, pady=(10, 0))
         bot.columnconfigure(1, weight=1)
 
     # ── folders ────────────────────────────────────────────────────────────────
