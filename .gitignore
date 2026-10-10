@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+.venv/
+.env
+.env.*
+*.session
+*.session-journal
+*.p12
+*.pem
+*.key
+*.log
+dist/
+build/
+*.egg-info/
+.pytest_cache/
+dedupekit-quarantine/
+*.json
