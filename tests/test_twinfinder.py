@@ -7,11 +7,11 @@ from pathlib import Path
 import pytest
 from PIL import Image, ImageDraw
 
-from dedupekit.actions import apply_plans, make_plans, pick_keeper
-from dedupekit.cli import main
-from dedupekit.exact import find_exact
-from dedupekit.files import walk
-from dedupekit.perceptual import (dhash_pixels, find_similar_images, group_similar, hamming)
+from twinfinder.actions import apply_plans, make_plans, pick_keeper
+from twinfinder.cli import main
+from twinfinder.exact import find_exact
+from twinfinder.files import walk
+from twinfinder.perceptual import (dhash_pixels, find_similar_images, group_similar, hamming)
 
 FFMPEG = os.environ.get("FFMPEG_BIN") or shutil.which("ffmpeg")
 FFPROBE = os.environ.get("FFPROBE_BIN") or shutil.which("ffprobe")
@@ -190,7 +190,7 @@ def _clip(path: Path, source: str, size="320x240", crf="23"):
 
 @needs_ffmpeg
 def test_video_reencodado_e_menor_e_agrupado_e_video_diferente_nao(tmp_path):
-    from dedupekit.video import find_similar_videos
+    from twinfinder.video import find_similar_videos
     _clip(tmp_path / "original.mp4", "testsrc2", "640x480", "18")
     subprocess.run([FFMPEG, "-v", "error", "-i", str(tmp_path / "original.mp4"), "-vf", "scale=320:240",
                     "-crf", "32", "-y", str(tmp_path / "pequeno.mp4")], check=True)
@@ -202,7 +202,7 @@ def test_video_reencodado_e_menor_e_agrupado_e_video_diferente_nao(tmp_path):
 
 @needs_ffmpeg
 def test_video_highest_res_mantem_o_de_maior_resolucao(tmp_path, monkeypatch):
-    from dedupekit import video
+    from twinfinder import video
     monkeypatch.setattr(video, "shutil", shutil)
     monkeypatch.setenv("PATH", str(Path(FFMPEG).parent) + os.pathsep + os.environ["PATH"])
     _clip(tmp_path / "hd.mp4", "testsrc2", "640x480", "18")

@@ -56,7 +56,7 @@ def reveal_in_file_manager(path: Path) -> None:
 class App(tk.Tk):
     def __init__(self) -> None:
         super().__init__()
-        self.title(f"dedupekit {__version__} - Achador de fotos e vídeos duplicados")
+        self.title(f"TwinFinder {__version__} - Achador de fotos e vídeos duplicados")
         self.geometry("1100x700")
         self.minsize(900, 560)
         os.environ["PATH"] = str(_exe_dir()) + os.pathsep + os.environ.get("PATH", "")   # ffmpeg.exe beside us
@@ -68,7 +68,7 @@ class App(tk.Tk):
         self.cancel_flag = threading.Event()
         self.worker: Optional[threading.Thread] = None
         self.preview_ref = None
-        self.quarantine = tk.StringVar(value=str(Path.home() / "dedupekit-quarentena"))
+        self.quarantine = tk.StringVar(value=str(Path.home() / "twinfinder-quarentena"))
         self.vars = {
             "images": tk.BooleanVar(value=True), "videos": tk.BooleanVar(value=False),
             "mark_similar": tk.BooleanVar(value=False), "action": tk.StringVar(value="quarantine"),
@@ -188,7 +188,7 @@ class App(tk.Tk):
     # ── scan ───────────────────────────────────────────────────────────────────
     def start_scan(self) -> None:
         if not self.paths:
-            messagebox.showinfo("dedupekit", "Adicione pelo menos uma pasta.")
+            messagebox.showinfo("TwinFinder", "Adicione pelo menos uma pasta.")
             return
         img_t, vid_t = SENSITIVITY[self.vars["sens"].get()]
         opts = ScanOptions(similar_images=self.vars["images"].get(), similar_videos=self.vars["videos"].get(),
@@ -243,7 +243,7 @@ class App(tk.Tk):
                 elif ev[0] == "error":
                     self._set_busy(False)
                     self.status.config(text="Erro na busca.")
-                    messagebox.showerror("dedupekit", f"A busca falhou:\n{ev[1]}")
+                    messagebox.showerror("TwinFinder", f"A busca falhou:\n{ev[1]}")
         except queue.Empty:
             pass
         self.after(100, self._poll)
@@ -258,7 +258,7 @@ class App(tk.Tk):
         total = len(self.groups)
         self.status.config(text=f"{result.files_scanned} arquivos analisados, {total} grupo(s) de duplicados.")
         if not total:
-            messagebox.showinfo("dedupekit", "Nenhum duplicado encontrado. 🎉")
+            messagebox.showinfo("TwinFinder", "Nenhum duplicado encontrado. 🎉")
 
     def _remark(self) -> None:
         if self.groups:
@@ -290,7 +290,7 @@ class App(tk.Tk):
             return
         gi, path = self.iid_map[iid]
         if not self.groups[gi].toggle(path):
-            messagebox.showinfo("dedupekit", "Pelo menos um arquivo de cada grupo precisa ser mantido.")
+            messagebox.showinfo("TwinFinder", "Pelo menos um arquivo de cada grupo precisa ser mantido.")
             return
         removed = self.groups[gi].is_removed(path)
         self.tree.item(iid, tags=("remove" if removed else "keep",))
@@ -351,7 +351,7 @@ class App(tk.Tk):
             out = apply_plans(to_plans(self.groups), action=action, roots=list(self.paths),
                               quarantine_dir=Path(self.quarantine.get()), apply=True)
         except RuntimeError as exc:
-            messagebox.showerror("dedupekit", str(exc))
+            messagebox.showerror("TwinFinder", str(exc))
             return
         msg = (f"Movidos: {out.count('moved') + out.count('trashed')}\n"
                f"Pulados: {out.count('skipped')}\nErros: {out.count('error')}")

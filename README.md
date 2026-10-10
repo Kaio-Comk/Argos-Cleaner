@@ -1,4 +1,4 @@
-# dedupekit
+# TwinFinder
 
 Find **duplicate photos and videos by content, not by name**, and clean them up
 safely. Pure Python, runs locally, nothing is uploaded anywhere.
@@ -11,7 +11,7 @@ safely. Pure Python, runs locally, nothing is uploaded anywhere.
 
 ## Windows app (no Python needed)
 
-Download **`dedupekit.exe`** from the [latest release](https://github.com/Kaio-Comk/dedupekit/releases/latest)
+Download **`TwinFinder.exe`** from the [latest release](https://github.com/Kaio-Comk/twinfinder/releases/latest)
 and double-click it. The window walks you through four steps:
 
 1. add the folders to scan;
@@ -20,11 +20,11 @@ and double-click it. The window walks you through four steps:
 4. clean: move to a **quarantine folder** or the **Recycle Bin**, always after a confirmation.
 
 Notes:
-- For *similar videos*, put `ffmpeg.exe` and `ffprobe.exe` in the same folder as `dedupekit.exe`.
+- For *similar videos*, put `ffmpeg.exe` and `ffprobe.exe` in the same folder as `TwinFinder.exe`.
 - Windows SmartScreen may warn about an unsigned app. The exe is built by GitHub Actions from this
   source (see `.github/workflows/release.yml`), and a `.sha256` file is published next to it so you
-  can verify the download: `certutil -hashfile dedupekit.exe SHA256`.
-- From source: `pip install "dedupekit[all]"` then `dedupekit-gui`.
+  can verify the download: `certutil -hashfile TwinFinder.exe SHA256`.
+- From source: `pip install "twinfinder[all]"` then `twinfinder-gui`.
 
 ## Safety first
 
@@ -39,8 +39,8 @@ Notes:
 ## Install
 
 ```bash
-pip install git+https://github.com/Kaio-Comk/dedupekit.git
-pip install "dedupekit[all]"    # optional: Pillow (similar photos), blake3 (speed), send2trash (trash)
+pip install git+https://github.com/Kaio-Comk/twinfinder.git
+pip install "twinfinder[all]"    # optional: Pillow (similar photos), blake3 (speed), send2trash (trash)
 ```
 
 Similar videos need `ffmpeg` and `ffprobe` on your `PATH`.
@@ -49,16 +49,16 @@ Similar videos need `ffmpeg` and `ffprobe` on your `PATH`.
 
 ```bash
 # 1. Look first (changes nothing). Add --json to save the full list.
-dedupekit scan D:\Photos --similar-images --similar-videos --json report.json
+twinfinder scan D:\Photos --similar-images --similar-videos --json report.json
 
 # 2. Dry run of the cleanup: shows what WOULD move.
-dedupekit clean D:\Photos --keep highest-res
+twinfinder clean D:\Photos --keep highest-res
 
-# 3. Do it (exact duplicates go to .\dedupekit-quarantine, nothing is deleted).
-dedupekit clean D:\Photos --keep highest-res --apply
+# 3. Do it (exact duplicates go to .\twinfinder-quarantine, nothing is deleted).
+twinfinder clean D:\Photos --keep highest-res --apply
 
 # Also act on similar photos/videos, sending them to the Recycle Bin instead:
-dedupekit clean D:\Photos --similar-images --similar-videos --include-similar \
+twinfinder clean D:\Photos --similar-images --similar-videos --include-similar \
     --keep highest-res --action trash --apply
 ```
 
@@ -81,7 +81,7 @@ After checking the quarantine folder, delete it yourself when you are sure.
 
 ## How it relates to other tools
 
-dedupekit is a small, scriptable, MIT-licensed take on ideas proven by
+TwinFinder is a small, scriptable, MIT-licensed take on ideas proven by
 [fclones](https://github.com/pkolaczk/fclones) (staged hashing),
 [Czkawka](https://github.com/qarmin/czkawka) and
 [dupeGuru](https://github.com/arsenetar/dupeguru) (similar images/videos),

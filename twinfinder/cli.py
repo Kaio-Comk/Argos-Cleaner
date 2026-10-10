@@ -1,4 +1,4 @@
-"""Command line: `dedupekit scan` (read only) and `dedupekit clean` (dry run unless --apply)."""
+"""Command line: `twinfinder scan` (read only) and `twinfinder clean` (dry run unless --apply)."""
 from __future__ import annotations
 
 import argparse
@@ -64,7 +64,7 @@ def _report(res: dict) -> None:
 
 
 def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(prog="dedupekit", description=__doc__)
+    ap = argparse.ArgumentParser(prog="twinfinder", description=__doc__)
     ap.add_argument("--version", action="version", version=__version__)
     sub = ap.add_subparsers(dest="cmd", required=True)
 
@@ -77,7 +77,7 @@ def main(argv=None) -> int:
     cp.add_argument("--keep", choices=POLICIES, default="highest-res",
                     help="which file of each group to keep (default highest-res)")
     cp.add_argument("--action", choices=("quarantine", "trash"), default="quarantine")
-    cp.add_argument("--quarantine-dir", type=Path, default=Path("dedupekit-quarantine"))
+    cp.add_argument("--quarantine-dir", type=Path, default=Path("twinfinder-quarantine"))
     cp.add_argument("--include-similar", action="store_true",
                     help="also act on similar (not byte-identical) groups; exact is always included")
     cp.add_argument("--apply", action="store_true", help="really move the files (default: dry run)")

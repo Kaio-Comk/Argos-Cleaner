@@ -13,7 +13,7 @@ dist/
 build/
 *.egg-info/
 .pytest_cache/
-dedupekit-quarantine/
+twinfinder-quarantine/
 *.json
 build/
 dist/

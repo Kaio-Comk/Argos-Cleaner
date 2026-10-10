@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from dedupekit.core import ScanOptions, ScanResult, scan_paths, Cancelled
-from dedupekit.files import FileInfo
-from dedupekit.gui_logic import GroupVM, build_groups, human, remark, summary, to_plans
+from twinfinder.core import ScanOptions, ScanResult, scan_paths, Cancelled
+from twinfinder.files import FileInfo
+from twinfinder.gui_logic import GroupVM, build_groups, human, remark, summary, to_plans
 
 
 def fi(name, size=100, mtime=1.0):
@@ -82,7 +82,7 @@ def test_scan_paths_fim_a_fim(tmp_path):
 def _app_or_skip():
     import tkinter as tk
     try:
-        from dedupekit.gui import App
+        from twinfinder.gui import App
         return App()
     except tk.TclError:
         pytest.skip("no display available for Tk")

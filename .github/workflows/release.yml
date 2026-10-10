@@ -14,12 +14,12 @@ jobs:
           python-version: "3.12"
       - run: pip install pyinstaller Pillow send2trash blake3
       - run: pip install -e .
-      - run: pyinstaller --noconfirm --clean --onefile --windowed --name dedupekit --collect-submodules dedupekit --hidden-import blake3 dedupekit_gui.pyw
+      - run: pyinstaller --noconfirm --clean --onefile --windowed --name TwinFinder --collect-submodules twinfinder --hidden-import blake3 twinfinder_gui.pyw
       - name: Checksum
         shell: pwsh
-        run: (Get-FileHash dist\dedupekit.exe -Algorithm SHA256).Hash.ToLower() + "  dedupekit.exe" | Out-File dist\dedupekit.exe.sha256 -Encoding ascii
+        run: (Get-FileHash dist\TwinFinder.exe -Algorithm SHA256).Hash.ToLower() + "  TwinFinder.exe" | Out-File dist\TwinFinder.exe.sha256 -Encoding ascii
       - name: Publish release
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release create "${{ github.ref_name }}" dist\dedupekit.exe dist\dedupekit.exe.sha256 --title "dedupekit ${{ github.ref_name }}" --generate-notes
+        run: gh release create "${{ github.ref_name }}" dist\TwinFinder.exe dist\TwinFinder.exe.sha256 --title "TwinFinder ${{ github.ref_name }}" --generate-notes
