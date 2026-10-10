@@ -179,7 +179,9 @@ class TakeoutWindow(tk.Toplevel):
                 rep = apply_takeout(self.scan_res, opts, apply=True, progress=cb_progress)
                 msg = f"Sucesso!\n\n📅 Datas de arquivo alteradas: {rep.dates_set}\n📸 Tags EXIF gravadas: {rep.exif_written}\n📦 Arquivos JSON movidos: {rep.sidecars_moved}"
                 if rep.errors:
-                    msg += f"\n\nOcorreram {len(rep.errors)} erros (veja o terminal para mais detalhes)."
+                    log_path = Path.home() / "Desktop" / "TwinFinder_Erros.txt"
+                    log_path.write_text("\n".join(rep.errors), encoding="utf-8")
+                    msg += f"\n\nOcorreram {len(rep.errors)} erros.\nOs detalhes foram salvos em: {log_path}"
                 messagebox.showinfo("Concluído", msg)
             except Exception as e:
                 messagebox.showerror("Erro", str(e))
