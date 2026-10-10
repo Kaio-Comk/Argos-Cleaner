@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import shutil
 import subprocess
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Iterable, Optional
@@ -32,11 +33,14 @@ def _tool(name: str, override: Optional[str]) -> str:
 def probe(path: Path, ffprobe: Optional[str] = None) -> tuple[float, int, int]:
     """(duration_seconds, width, height); zeros when unknown."""
     exe = _tool("ffprobe", ffprobe)
+    kwargs = {}
+    if sys.platform == "win32":
+        kwargs["creationflags"] = 0x08000000
     try:
         out = subprocess.run(
             [exe, "-v", "error", "-select_streams", "v:0", "-show_entries",
              "stream=width,height:format=duration", "-of", "csv=p=0:s=,", str(path)],
-            capture_output=True, text=True, timeout=60).stdout
+            capture_output=True, text=True, timeout=60, **kwargs).stdout
     except (OSError, subprocess.SubprocessError):
         return (0.0, 0, 0)
     width = height = 0
@@ -55,11 +59,14 @@ def probe(path: Path, ffprobe: Optional[str] = None) -> tuple[float, int, int]:
 
 def frame_hash(path: Path, at: float, ffmpeg: Optional[str] = None) -> Optional[int]:
     exe = _tool("ffmpeg", ffmpeg)
+    kwargs = {}
+    if sys.platform == "win32":
+        kwargs["creationflags"] = 0x08000000
     try:
         raw = subprocess.run(
             [exe, "-v", "error", "-ss", f"{at:.3f}", "-i", str(path), "-frames:v", "1",
              "-vf", "scale=9:8:flags=area,format=gray", "-f", "rawvideo", "-"],
-            capture_output=True, timeout=120).stdout
+            capture_output=True, timeout=120, **kwargs).stdout
     except (OSError, subprocess.SubprocessError):
         return None
     return dhash_pixels(raw) if len(raw) == 72 else None
