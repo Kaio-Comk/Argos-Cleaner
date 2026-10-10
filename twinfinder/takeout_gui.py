@@ -10,9 +10,11 @@ from .takeout import ApplyOptions, TakeoutScan, apply_takeout, scan_takeout
 class TakeoutWindow(tk.Toplevel):
     def __init__(self, parent: tk.Tk) -> None:
         super().__init__(parent)
-        self.title("Restaurar Google Photos Takeout")
-        self.geometry("700x550")
-        self.minsize(600, 500)
+        self.title("Google Photos Takeout Fixer")
+        self.geometry("750x650")
+        self.minsize(650, 550)
+        self.transient(parent) # Makes it float over the parent
+        self.grab_set()        # Modal window
         
         self.paths: list[Path] = []
         self.scan_res: Optional[TakeoutScan] = None
@@ -27,41 +29,61 @@ class TakeoutWindow(tk.Toplevel):
         self._build()
 
     def _build(self) -> None:
-        pad = {"padx": 8, "pady": 4}
+        # Estilo para os frames
+        style = ttk.Style(self)
+        style.configure("TFrame", background=self.cget("bg"))
         
-        top = ttk.LabelFrame(self, text="1. Pastas do Takeout para analisar")
-        top.pack(fill="x", **pad)
-        self.lb = tk.Listbox(top, height=3)
-        self.lb.pack(side="left", fill="x", expand=True, padx=6, pady=6)
+        main_frame = ttk.Frame(self, padding="20 20 20 20")
+        main_frame.pack(fill="both", expand=True)
+        
+        # Header
+        hdr = ttk.Label(main_frame, text="Restauração de Metadados (Google Takeout)", font=("Segoe UI", 16, "bold"))
+        hdr.pack(anchor="w", pady=(0, 5))
+        sub_hdr = ttk.Label(main_frame, text="Reconecta os arquivos .json às suas respectivas fotos/vídeos para recuperar Data e GPS.", foreground="#555")
+        sub_hdr.pack(anchor="w", pady=(0, 20))
+
+        # 1. Pastas
+        top = ttk.LabelFrame(main_frame, text=" 1. Pastas da Exportação ", padding="10 10 10 10")
+        top.pack(fill="x", pady=(0, 15))
+        
+        self.lb = tk.Listbox(top, height=4, relief="flat", borderwidth=1, highlightthickness=1, highlightcolor="#ccc")
+        self.lb.pack(side="left", fill="x", expand=True, padx=(0, 10))
+        
         col = ttk.Frame(top)
-        col.pack(side="left", padx=6)
-        ttk.Button(col, text="Adicionar pasta…", command=self.add_folder).pack(fill="x", pady=2)
-        ttk.Button(col, text="Remover", command=self.remove_folder).pack(fill="x", pady=2)
+        col.pack(side="left")
+        ttk.Button(col, text="Adicionar pasta…", command=self.add_folder, width=20).pack(fill="x", pady=(0, 5))
+        ttk.Button(col, text="Remover", command=self.remove_folder, width=20).pack(fill="x")
         
-        opt = ttk.LabelFrame(self, text="2. Opções de Restauração")
-        opt.pack(fill="x", **pad)
-        ttk.Checkbutton(opt, text="Corrigir a Data de Modificação do arquivo", variable=self.vars["set_dates"]).pack(anchor="w", padx=6, pady=2)
-        ttk.Checkbutton(opt, text="Gravar Data/GPS DENTRO do arquivo EXIF (Requer ExifTool)", variable=self.vars["exif"]).pack(anchor="w", padx=6, pady=2)
-        ttk.Checkbutton(opt, text="Sobrescrever datas existentes no EXIF (padrão: apenas preencher se estiver vazio)", variable=self.vars["overwrite_exif"]).pack(anchor="w", padx=6, pady=2)
+        # 2. Opções
+        opt = ttk.LabelFrame(main_frame, text=" 2. Como Restaurar? ", padding="10 10 10 10")
+        opt.pack(fill="x", pady=(0, 20))
+        
+        ttk.Checkbutton(opt, text="Corrigir a Data de Criação/Modificação do arquivo no Windows", variable=self.vars["set_dates"]).grid(row=0, column=0, sticky="w", pady=4)
+        ttk.Checkbutton(opt, text="Gravar Data/GPS DENTRO do EXIF do arquivo (Requer ExifTool)", variable=self.vars["exif"]).grid(row=1, column=0, sticky="w", pady=4)
+        ttk.Checkbutton(opt, text="Sobrescrever datas EXIF (Desmarque para preencher apenas os vazios)", variable=self.vars["overwrite_exif"]).grid(row=2, column=0, sticky="w", pady=4)
+        
+        sep = ttk.Separator(opt, orient="horizontal")
+        sep.grid(row=3, column=0, sticky="we", pady=10)
         
         mov = ttk.Frame(opt)
-        mov.pack(fill="x", padx=6, pady=2)
-        ttk.Label(mov, text="Mover os .json lidos para (vazio = não mover):").pack(side="left")
-        ttk.Entry(mov, textvariable=self.vars["move_sidecars"], width=30).pack(side="left", padx=6)
-        ttk.Button(mov, text="Escolher…", command=self.pick_dest).pack(side="left")
+        mov.grid(row=4, column=0, sticky="we")
+        ttk.Label(mov, text="Mover os .json processados para:").pack(side="left", padx=(0, 5))
+        ttk.Entry(mov, textvariable=self.vars["move_sidecars"], width=35).pack(side="left", padx=5)
+        ttk.Button(mov, text="Procurar…", command=self.pick_dest).pack(side="left")
 
-        mid = ttk.Frame(self)
-        mid.pack(fill="both", expand=True, **pad)
-        self.btn_scan = ttk.Button(mid, text="Analisar Pastas", command=self.scan)
-        self.btn_scan.pack(pady=4)
+        # 3. Análise
+        mid = ttk.Frame(main_frame)
+        mid.pack(fill="both", expand=True)
         
-        self.status = ttk.Label(mid, text="Adicione as pastas e clique em Analisar.", justify="center")
-        self.status.pack(pady=8)
+        self.btn_scan = ttk.Button(mid, text="1º Passo: Analisar Pastas", command=self.scan, style="Accent.TButton")
+        self.btn_scan.pack(pady=(10, 5))
         
-        bot = ttk.Frame(self)
-        bot.pack(fill="x", **pad)
-        self.btn_apply = ttk.Button(bot, text="Aplicar Correções (Sem Volta)", command=self.apply_fixes, state="disabled")
-        self.btn_apply.pack(pady=10)
+        self.status = ttk.Label(mid, text="Adicione as pastas e clique em Analisar para começar.", justify="center", font=("Segoe UI", 10))
+        self.status.pack(pady=10)
+        
+        # 4. Ação Final
+        self.btn_apply = ttk.Button(mid, text="2º Passo: Aplicar Correções (Irreversível)", command=self.apply_fixes, state="disabled")
+        self.btn_apply.pack(pady=(15, 0))
 
     def add_folder(self) -> None:
         d = filedialog.askdirectory(title="Escolha a pasta do Takeout")
@@ -77,34 +99,34 @@ class TakeoutWindow(tk.Toplevel):
             self.btn_apply.config(state="disabled")
 
     def pick_dest(self) -> None:
-        d = filedialog.askdirectory(title="Pasta para os arquivos .json")
+        d = filedialog.askdirectory(title="Mover JSONs para...")
         if d:
             self.vars["move_sidecars"].set(d)
 
     def scan(self) -> None:
         if not self.paths:
-            return messagebox.showinfo("Aviso", "Adicione pastas.")
+            return messagebox.showinfo("Aviso", "Adicione pastas primeiro.")
         self.btn_scan.config(state="disabled", text="Analisando...")
         self.update()
         
         try:
             self.scan_res = scan_takeout(self.paths)
-            msg = (f"Encontrados:\n\n"
-                   f"✅ {len(self.scan_res.pairs)} fotos/vídeos com o .json correspondente.\n"
-                   f"⚠️ {len(self.scan_res.media_without_sidecar)} fotos sem .json (não serão alteradas).\n"
-                   f"🗑️ {len(self.scan_res.orphan_sidecars)} arquivos .json órfãos (sem foto).")
+            msg = (f"Resultados da Análise:\n\n"
+                   f"🟢 {len(self.scan_res.pairs)} fotos/vídeos com o .json correspondente encontrados!\n"
+                   f"🟠 {len(self.scan_res.media_without_sidecar)} mídias sem .json (não serão afetadas).\n"
+                   f"⚪ {len(self.scan_res.orphan_sidecars)} arquivos .json órfãos (sem foto correspondente).")
             self.status.config(text=msg)
             if self.scan_res.pairs:
                 self.btn_apply.config(state="normal")
         except Exception as e:
             messagebox.showerror("Erro", str(e))
         finally:
-            self.btn_scan.config(state="normal", text="Analisar Pastas")
+            self.btn_scan.config(state="normal", text="1º Passo: Analisar Pastas")
 
     def apply_fixes(self) -> None:
         if not self.scan_res or not self.scan_res.pairs:
             return
-        if not messagebox.askyesno("Confirmar", f"Isso irá modificar {len(self.scan_res.pairs)} arquivos. Tem certeza?"):
+        if not messagebox.askyesno("Confirmar", f"Isso irá injetar os metadados em {len(self.scan_res.pairs)} arquivos.\nVocê tem certeza?"):
             return
             
         move_p = self.vars["move_sidecars"].get()
@@ -122,15 +144,15 @@ class TakeoutWindow(tk.Toplevel):
         def work():
             try:
                 rep = apply_takeout(self.scan_res, opts, apply=True)
-                msg = f"Sucesso!\nDatas alteradas: {rep.dates_set}\nEXIF gravados: {rep.exif_written}\nJSONs movidos: {rep.sidecars_moved}"
+                msg = f"Sucesso!\n\n📅 Datas de arquivo alteradas: {rep.dates_set}\n📸 Tags EXIF gravadas: {rep.exif_written}\n📦 Arquivos JSON movidos: {rep.sidecars_moved}"
                 if rep.errors:
-                    msg += f"\n\nOcorreram {len(rep.errors)} erros (veja terminal)."
+                    msg += f"\n\nOcorreram {len(rep.errors)} erros (veja o terminal para mais detalhes)."
                 messagebox.showinfo("Concluído", msg)
             except Exception as e:
                 messagebox.showerror("Erro", str(e))
             finally:
-                self.btn_apply.config(state="normal", text="Aplicar Correções (Sem Volta)")
+                self.btn_apply.config(state="normal", text="2º Passo: Aplicar Correções (Irreversível)")
                 self.scan_res = None
-                self.status.config(text="Limpeza concluída. Analise novamente se desejar.")
+                self.status.config(text="Limpeza concluída. Analise novamente se desejar processar mais fotos.")
                 
         threading.Thread(target=work, daemon=True).start()
