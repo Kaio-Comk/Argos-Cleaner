@@ -286,7 +286,10 @@ def apply_takeout(scan: TakeoutScan, opts: ApplyOptions, *, apply: bool = False,
                     cmd = [exe, "-m", "-q", "-q", *exiftool_args(sc, kind, only_missing=opts.only_missing)]
                     if opts.out_dir or not opts.keep_exiftool_backup:
                         cmd.append("-overwrite_original")
-                    r = subprocess.run([*cmd, str(target)], capture_output=True, text=True, timeout=300)
+                    kw = {}
+                    if sys.platform == "win32":
+                        kw["creationflags"] = 0x08000000  # CREATE_NO_WINDOW
+                    r = subprocess.run([*cmd, str(target)], capture_output=True, text=True, timeout=300, **kw)
                     if r.returncode != 0:
                         raise RuntimeError(r.stderr.strip() or f"exiftool exit {r.returncode}")
                 rep.exif_written += 1
