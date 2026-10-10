@@ -75,7 +75,19 @@ class App(tk.Tk):
             "sens": tk.StringVar(value="Normal"), "keep": tk.StringVar(value="Maior resolução"),
         }
         self._build()
+        self._build_menu()
         self.after(100, self._poll)
+
+    def _build_menu(self) -> None:
+        menubar = tk.Menu(self)
+        tools = tk.Menu(menubar, tearoff=0)
+        tools.add_command(label="Corrigir Google Photos Takeout...", command=self.open_takeout)
+        menubar.add_cascade(label="Ferramentas", menu=tools)
+        self.config(menu=menubar)
+
+    def open_takeout(self) -> None:
+        from .takeout_gui import TakeoutWindow
+        TakeoutWindow(self)
 
     # ── layout ─────────────────────────────────────────────────────────────────
     def _build(self) -> None:
