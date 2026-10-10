@@ -87,12 +87,17 @@ class App(tk.Tk):
         menubar = tk.Menu(self)
         tools = tk.Menu(menubar, tearoff=0)
         tools.add_command(label="Corrigir Google Photos Takeout...", command=self.open_takeout)
+        tools.add_command(label="Corrigir Extensões de Arquivos...", command=self.open_fixer)
         menubar.add_cascade(label="Ferramentas", menu=tools)
         self.config(menu=menubar)
 
     def open_takeout(self) -> None:
         from .takeout_gui import TakeoutWindow
         TakeoutWindow(self)
+
+    def open_fixer(self) -> None:
+        from .fixer_gui import FixerWindow
+        FixerWindow(self)
 
     # ── layout ─────────────────────────────────────────────────────────────────
     def _build(self) -> None:
