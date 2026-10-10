@@ -63,6 +63,29 @@ def _report(res: dict) -> None:
     print(f"\nScanned {res['files_scanned']} file(s).")
 
 
+def _takeout(args) -> int:
+    from .takeout import ApplyOptions, apply_takeout, scan_takeout
+    scan = scan_takeout(args.paths)
+    print(f"{len(scan.pairs)} media file(s) matched with a .json; "
+          f"{len(scan.media_without_sidecar)} without one; {len(scan.orphan_sidecars)} orphan .json (no media).")
+    opts = ApplyOptions(set_dates=not args.no_dates, exif=args.exif, exiftool=args.exiftool, out_dir=args.out,
+                        keep_exiftool_backup=not args.no_exif_backup, only_missing=not args.overwrite_exif,
+                        move_sidecars_to=args.move_sidecars)
+    try:
+        rep = apply_takeout(scan, opts, apply=args.apply)
+    except RuntimeError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    verb = "Done" if args.apply else "Would do (dry run)"
+    print(f"{verb}: set dates on {rep.dates_set}, write metadata into {rep.exif_written}, "
+          f"move {rep.sidecars_moved} .json.")
+    for e in rep.errors[:20]:
+        print(f"  ! {e}")
+    if not args.apply:
+        print("Nothing was changed. Re-run with --apply to do it.")
+    return 1 if rep.errors and args.apply else 0
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="twinfinder", description=__doc__)
     ap.add_argument("--version", action="version", version=__version__)
@@ -82,7 +105,23 @@ def main(argv=None) -> int:
                     help="also act on similar (not byte-identical) groups; exact is always included")
     cp.add_argument("--apply", action="store_true", help="really move the files (default: dry run)")
 
+    tp = sub.add_parser("takeout", help="Google Photos export: put real dates/GPS back into the photos")
+    tp.add_argument("paths", nargs="+", type=Path, help="folder(s) with the exported photos + .json files")
+    tp.add_argument("--no-dates", action="store_true", help="do not set the file dates")
+    tp.add_argument("--exif", action="store_true", help="also write date/GPS/description INTO the files (needs ExifTool)")
+    tp.add_argument("--exiftool", help="path to exiftool (default: beside the program or on PATH)")
+    tp.add_argument("--out", type=Path, help="with --exif: write COPIES here and leave the originals untouched")
+    tp.add_argument("--no-exif-backup", action="store_true",
+                    help="with --exif in place: do not keep ExifTool's *_original backups")
+    tp.add_argument("--overwrite-exif", action="store_true",
+                    help="replace dates the file already has (default: only fill the missing ones)")
+    tp.add_argument("--move-sidecars", type=Path, help="move the merged .json files into this folder")
+    tp.add_argument("--apply", action="store_true", help="really do it (default: dry run)")
+
     args = ap.parse_args(argv)
+
+    if args.cmd == "takeout":
+        return _takeout(args)
 
     if args.cmd == "scan":
         res = _scan(args)
