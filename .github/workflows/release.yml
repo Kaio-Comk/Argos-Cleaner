@@ -1,0 +1,25 @@
+name: release
+on:
+  push:
+    tags: ["v*"]
+permissions:
+  contents: write
+jobs:
+  windows-exe:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pyinstaller Pillow send2trash blake3
+      - run: pip install -e .
+      - run: pyinstaller --noconfirm --clean --onefile --windowed --name dedupekit --collect-submodules dedupekit --hidden-import blake3 dedupekit_gui.pyw
+      - name: Checksum
+        shell: pwsh
+        run: (Get-FileHash dist\dedupekit.exe -Algorithm SHA256).Hash.ToLower() + "  dedupekit.exe" | Out-File dist\dedupekit.exe.sha256 -Encoding ascii
+      - name: Publish release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release create "${{ github.ref_name }}" dist\dedupekit.exe dist\dedupekit.exe.sha256 --title "dedupekit ${{ github.ref_name }}" --generate-notes

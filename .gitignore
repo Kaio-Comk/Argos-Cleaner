@@ -15,3 +15,6 @@ build/
 .pytest_cache/
 dedupekit-quarantine/
 *.json
+build/
+dist/
+*.spec

@@ -1,6 +1,6 @@
 [project]
 name = "dedupekit"
-version = "0.1.0"
+version = "0.2.0"
 description = "Find duplicate photos and videos by content (exact and similar) and clean them up safely"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -16,6 +16,9 @@ dev = ["pytest>=8", "Pillow>=10", "send2trash>=1.8"]
 
 [project.scripts]
 dedupekit = "dedupekit.cli:main"
+
+[project.gui-scripts]
+dedupekit-gui = "dedupekit.gui:run"
 
 [build-system]
 requires = ["setuptools>=68"]

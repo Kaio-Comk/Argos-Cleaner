@@ -8,9 +8,7 @@ from pathlib import Path
 
 from . import __version__
 from .actions import POLICIES, apply_plans, make_plans
-from .exact import find_exact
-from .files import FileInfo, walk
-from .perceptual import find_similar_images
+from .core import ScanOptions, scan_paths
 
 
 def _human(n: int) -> str:
@@ -36,18 +34,12 @@ def _add_scan_args(p: argparse.ArgumentParser) -> None:
 
 
 def _scan(args, exclude_extra=()) -> dict:
-    files: list[FileInfo] = list(walk(args.paths, min_size=args.min_size,
-                                      exclude=[*args.exclude, *exclude_extra]))
-    result = {"files_scanned": len(files), "exact": find_exact(files),
-              "similar_images": [], "similar_videos": []}
-    exact_paths = {f.path for g in result["exact"] for f in g[1:]}
-    rest = [f for f in files if f.path not in exact_paths]       # no need to re-check copies
-    if args.similar_images:
-        result["similar_images"] = find_similar_images(rest, args.image_threshold)
-    if args.similar_videos:
-        from .video import find_similar_videos
-        result["similar_videos"] = find_similar_videos(rest, args.video_threshold)
-    return result
+    res = scan_paths(args.paths, ScanOptions(
+        similar_images=args.similar_images, similar_videos=args.similar_videos,
+        image_threshold=args.image_threshold, video_threshold=args.video_threshold,
+        min_size=args.min_size, exclude=[*args.exclude, *exclude_extra]))
+    return {"files_scanned": res.files_scanned, "exact": res.exact,
+            "similar_images": res.similar_images, "similar_videos": res.similar_videos}
 
 
 def _group_json(groups):

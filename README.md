@@ -9,6 +9,23 @@ safely. Pure Python, runs locally, nothing is uploaded anywhere.
 | **Similar photos** | perceptual hash (dHash) that survives resizing, recompression and format changes (`photo.png` vs a 70% JPEG thumbnail). |
 | **Similar videos** | fingerprint of 5 frames per video (via ffmpeg): the same video re-encoded, resized or re-muxed. |
 
+## Windows app (no Python needed)
+
+Download **`dedupekit.exe`** from the [latest release](https://github.com/Kaio-Comk/dedupekit/releases/latest)
+and double-click it. The window walks you through four steps:
+
+1. add the folders to scan;
+2. choose options (similar photos / similar videos, sensitivity, which copy to keep);
+3. review the groups (double-click a file to flip *Keep* / *Remove*; a preview shows the photo);
+4. clean: move to a **quarantine folder** or the **Recycle Bin**, always after a confirmation.
+
+Notes:
+- For *similar videos*, put `ffmpeg.exe` and `ffprobe.exe` in the same folder as `dedupekit.exe`.
+- Windows SmartScreen may warn about an unsigned app. The exe is built by GitHub Actions from this
+  source (see `.github/workflows/release.yml`), and a `.sha256` file is published next to it so you
+  can verify the download: `certutil -hashfile dedupekit.exe SHA256`.
+- From source: `pip install "dedupekit[all]"` then `dedupekit-gui`.
+
 ## Safety first
 
 - **Dry run is the default.** Nothing moves unless you pass `--apply`.
