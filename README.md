@@ -1,13 +1,13 @@
 <div align="center">
 
-# 🔍 TwinFinder
-### Intelligent, Safe Duplicate Finder & Google Photos Takeout Organizer for Windows, Linux & macOS
+# 🔍 Argos-Cleaner
+### Intelligent, Safe Duplicate Media Cleaner & Google Photos Takeout Organizer
 
 [![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-blue.svg?logo=python&logoColor=white)](https://python.org)
-[![Platform: Windows | Linux | macOS](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](https://github.com/Kaio-Comk/twinfinder)
-[![Hashing: BLAKE3 & dHash](https://img.shields.io/badge/Hashing-BLAKE3%20%7C%20Perceptual%20dHash-orange.svg)](https://github.com/Kaio-Comk/twinfinder)
-[![GUI: Modern Tkinter](https://img.shields.io/badge/GUI-Modern%20Sun%20Valley%20Theme-blueviolet.svg)](https://github.com/Kaio-Comk/twinfinder)
-[![Safety: Quarantine First](https://img.shields.io/badge/Safety-Non--Destructive%20Quarantine-success.svg)](https://github.com/Kaio-Comk/twinfinder)
+[![Platform: Windows | Linux | macOS](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](https://github.com/Kaio-Comk/Argos-Cleaner)
+[![Hashing: BLAKE3 & dHash](https://img.shields.io/badge/Hashing-BLAKE3%20%7C%20Perceptual%20dHash-orange.svg)](https://github.com/Kaio-Comk/Argos-Cleaner)
+[![GUI: Modern Tkinter](https://img.shields.io/badge/GUI-Modern%20Sun%20Valley%20Theme-blueviolet.svg)](https://github.com/Kaio-Comk/Argos-Cleaner)
+[![Safety: Quarantine First](https://img.shields.io/badge/Safety-Non--Destructive%20Quarantine-success.svg)](https://github.com/Kaio-Comk/Argos-Cleaner)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 **Find duplicate photos and videos by content — not just by name — and safely clean them up.**  
@@ -111,15 +111,15 @@ twinfinder clean D:\Photos --similar-images --include-similar --keep highest-res
 ## 📱 Companion Mobile App
 
 Need to clean duplicate photos on your Android phone?  
-Check out **[TwinFinder for Android](https://github.com/Kaio-Comk/twinfinder-android)** — 100% offline, native Kotlin with scoped storage and system trash integration.
+Check out **[Argos-Android](https://github.com/Kaio-Comk/Argos-Android)** — 100% offline, native Kotlin with scoped storage and system trash integration.
 
 ---
 
 ## 🧪 Development & Testing
 
 ```bash
-git clone https://github.com/Kaio-Comk/twinfinder.git
-cd twinfinder
+git clone https://github.com/Kaio-Comk/Argos-Cleaner.git
+cd Argos-Cleaner
 
 python -m venv .venv
 .venv\Scripts\activate
@@ -135,5 +135,5 @@ pytest
 Distributed under the **MIT License**. See `LICENSE` for details.
 
 <div align="center">
-  <sub>Built with ❤️ by Kaio Lima. If TwinFinder helped you recover storage, please give it a ⭐!</sub>
+  <sub>Built with ❤️ by Kaio Lima. If Argos-Cleaner helped you recover storage, please give it a ⭐!</sub>
 </div>
