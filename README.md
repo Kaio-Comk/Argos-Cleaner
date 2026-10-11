@@ -1,100 +1,139 @@
-# TwinFinder
+<div align="center">
 
-Find **duplicate photos and videos by content, not by name**, and clean them up
-safely. Pure Python, runs locally, nothing is uploaded anywhere.
+# 🔍 TwinFinder
+### Intelligent, Safe Duplicate Finder & Google Photos Takeout Organizer for Windows, Linux & macOS
 
-| It finds | How |
-|---|---|
-| **Exact duplicates** (any file type) | size, then partial hash, then full hash (BLAKE3 or SHA-256). Files are only read in full when they could really match. |
-| **Similar photos** | perceptual hash (dHash) that survives resizing, recompression and format changes (`photo.png` vs a 70% JPEG thumbnail). |
-| **Similar videos** | fingerprint of 5 frames per video (via ffmpeg): the same video re-encoded, resized or re-muxed. |
+[![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-blue.svg?logo=python&logoColor=white)](https://python.org)
+[![Platform: Windows | Linux | macOS](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](https://github.com/Kaio-Comk/twinfinder)
+[![Hashing: BLAKE3 & dHash](https://img.shields.io/badge/Hashing-BLAKE3%20%7C%20Perceptual%20dHash-orange.svg)](https://github.com/Kaio-Comk/twinfinder)
+[![GUI: Modern Tkinter](https://img.shields.io/badge/GUI-Modern%20Sun%20Valley%20Theme-blueviolet.svg)](https://github.com/Kaio-Comk/twinfinder)
+[![Safety: Quarantine First](https://img.shields.io/badge/Safety-Non--Destructive%20Quarantine-success.svg)](https://github.com/Kaio-Comk/twinfinder)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## Windows app (no Python needed)
+**Find duplicate photos and videos by content — not just by name — and safely clean them up.**  
+*Includes a native modern Windows GUI, Google Photos Takeout organizer & EXIF fixer, and zero cloud uploads.*
 
-Download **`TwinFinder.exe`** from the [latest release](https://github.com/Kaio-Comk/twinfinder/releases/latest)
-and double-click it. The window walks you through four steps:
+[Windows App](#-windows-app-no-python-required) • [Key Capabilities](#-key-capabilities) • [Pipeline](#-how-the-detection-engine-works) • [Google Photos Takeout Fixer](#-google-photos-takeout-organizer) • [CLI Usage](#-cli-usage) • [Mobile Companion](#-companion-mobile-app)
 
-1. add the folders to scan;
-2. choose options (similar photos / similar videos, sensitivity, which copy to keep);
-3. review the groups (double-click a file to flip *Keep* / *Remove*; a preview shows the photo);
-4. clean: move to a **quarantine folder** or the **Recycle Bin**, always after a confirmation.
+</div>
 
-Notes:
-- For *similar videos*, put `ffmpeg.exe` and `ffprobe.exe` in the same folder as `TwinFinder.exe`.
-- Windows SmartScreen may warn about an unsigned app. The exe is built by GitHub Actions from this
-  source (see `.github/workflows/release.yml`), and a `.sha256` file is published next to it so you
-  can verify the download: `certutil -hashfile TwinFinder.exe SHA256`.
-- From source: `pip install "twinfinder[all]"` then `twinfinder-gui`.
+---
 
-## Safety first
+## 🌟 Key Capabilities
 
-- **Dry run is the default.** Nothing moves unless you pass `--apply`.
-- Files are **never deleted for good**: they go to a **quarantine folder** (mirroring the
-  original path, so you can restore them) or to the system **trash** (`--action trash`).
-- At least one file of every group always stays.
-- A file that changed after the scan is skipped, not touched.
-- Hard links to the same file are not duplicates; symlinks are never followed.
-- Similar (not byte-identical) groups are only touched with `--include-similar`.
+| Detection Mode | Technology | What it Solves |
+|---|---|---|
+| **Exact Duplicates** | Size filter ➔ Partial Hash ➔ Full BLAKE3 / SHA-256 | Bit-for-bit identical files across any extension or directory structure. Extremely fast staged I/O. |
+| **Similar Photos** | Perceptual Hashing (dHash) | Catches images resized, recompressed (JPEG vs PNG), or with minor watermarks. |
+| **Similar Videos** | FFmpeg 5-frame temporal fingerprinting | Detects the same video clip re-encoded, re-muxed, or with different bitrates. |
+| **Google Photos Takeout** | Fast ExifTool batch processing (`stay_open`) | Merges JSON metadata sidecars back into photos/videos and repairs incorrect extensions. |
 
-## Install
+---
 
-```bash
-pip install git+https://github.com/Kaio-Comk/twinfinder.git
-pip install "twinfinder[all]"    # optional: Pillow (similar photos), blake3 (speed), send2trash (trash)
+## 💻 Windows App (No Python Required)
+
+1. Download **`TwinFinder.exe`** from the [Latest GitHub Release](https://github.com/Kaio-Comk/twinfinder/releases/latest).
+2. Launch the application (features modern Sun Valley theme with dark/light mode support).
+3. Follow the intuitive 4-step wizard:
+   * **Step 1:** Select folders to scan.
+   * **Step 2:** Choose criteria (Exact duplicates, Similar Photos, Similar Videos, resolution priority).
+   * **Step 3:** Visually inspect groups with image preview and keep/remove toggles.
+   * **Step 4:** Safely clean to an isolated **Quarantine folder** or system **Recycle Bin**.
+
+> **Tip for Video Comparison:** Place `ffmpeg.exe` and `ffprobe.exe` in the same directory as `TwinFinder.exe` or on your system `PATH`.
+
+---
+
+## 🏗️ How the Detection Engine Works
+
+```mermaid
+flowchart TD
+    Scan["📂 Scan Directory"] --> Size["📏 Group by exact File Size"]
+    Size -->|Unique Size| Unique["✅ Unique File (Fast Pass, No Hash)"]
+    Size -->|Same Size| Partial["⚡ Partial Hash (Header / Footer check)"]
+    Partial -->|Mismatch| Unique
+    Partial -->|Match| Full["🔒 Full BLAKE3 / SHA-256 Digest"]
+    Full --> ExactGroup["🗂️ Exact Duplicates Group"]
+    
+    Scan -->|--similar-images| DHash["🖼️ Perceptual dHash (Survives format & resize)"]
+    DHash --> SimGroup["🎨 Similar Photos Group"]
+    
+    Scan -->|--similar-videos| FFmpeg["🎬 FFmpeg 5-Frame Temporal Fingerprint"]
+    FFmpeg --> VidGroup["🎥 Similar Videos Group"]
+    
+    ExactGroup & SimGroup & VidGroup --> Safety["🛡️ Quarantine Folder / System Recycle Bin"]
 ```
 
-Similar videos need `ffmpeg` and `ffprobe` on your `PATH`.
+---
 
-## Use
+## 📸 Google Photos Takeout Organizer
 
-```bash
-# 1. Look first (changes nothing). Add --json to save the full list.
+Google Takeout exports photos and videos stripped of their original EXIF timestamps, dumping metadata into separate `.json` sidecars.
+
+TwinFinder includes an integrated, high-speed **Google Photos Takeout Processor**:
+* **High Performance:** Uses `exiftool` in persistent `stay_open` daemon mode for lightning-fast batch processing of tens of thousands of media files.
+* **Metadata Restoration:** Injects capture dates, GPS coordinates, and descriptions back into image EXIF and video metadata headers.
+* **Extension Mismatch Repair:** Identifies files named `.jpg` that are actually `.png` or `.mp4` and fixes extensions automatically.
+* **Clean Organization:** Flattens chaotic yearly folders into a standardized, organized archive.
+
+---
+
+## 🛡️ Safety Guarantees
+
+* **Non-Destructive by Default:** TwinFinder never hard-deletes your files permanently without explicit confirmation.
+* **Mirrored Quarantine:** Moved files are placed into a `twinfinder-quarantine` folder preserving the original folder hierarchy, making restorations instantaneous.
+* **Guaranteed Survivor:** At least one master file in every detected group is guaranteed to be preserved.
+* **Change Detection:** If a file was modified or deleted between scan and cleanup, it is safely skipped.
+* **Hardlink & Symlink Awareness:** Hardlinks pointing to the same inode/storage are recognized and never treated as duplicates; symlinks are never traversed.
+
+---
+
+## ⚡ CLI Usage
+
+```powershell
+# 1. Inspect library and generate JSON report (Non-destructive)
 twinfinder scan D:\Photos --similar-images --similar-videos --json report.json
 
-# 2. Dry run of the cleanup: shows what WOULD move.
+# 2. Dry run cleanup: preview what would move
 twinfinder clean D:\Photos --keep highest-res
 
-# 3. Do it (exact duplicates go to .\twinfinder-quarantine, nothing is deleted).
+# 3. Apply cleanup to quarantine directory
 twinfinder clean D:\Photos --keep highest-res --apply
 
-# Also act on similar photos/videos, sending them to the Recycle Bin instead:
-twinfinder clean D:\Photos --similar-images --similar-videos --include-similar \
-    --keep highest-res --action trash --apply
+# 4. Clean similar photos to the Windows Recycle Bin
+twinfinder clean D:\Photos --similar-images --include-similar --keep highest-res --action trash --apply
 ```
 
-`--keep` chooses which file of each group survives: `highest-res` (default; falls back to
-file size), `largest`, `smallest`, `oldest`, `newest` or `shortest-path`.
+`--keep` strategies: `highest-res` (default), `largest`, `smallest`, `oldest`, `newest`, `shortest-path`.
 
-Tuning: `--image-threshold` (default 5 differing bits of 64; lower is stricter),
-`--video-threshold` (default 8 bits per frame), `--min-size`, `--exclude PATH`.
+---
 
-After checking the quarantine folder, delete it yourself when you are sure.
+## 📱 Companion Mobile App
 
-## Honest limits
+Need to clean duplicate photos on your Android phone?  
+Check out **[TwinFinder for Android](https://github.com/Kaio-Comk/twinfinder-android)** — 100% offline, native Kotlin with scoped storage and system trash integration.
 
-- "Similar" is a judgment call: very different crops, heavy edits or very short videos can be
-  missed, and near-identical shots (burst photos) can be grouped. That is why similar groups need
-  `--include-similar`, and why the quarantine exists. Review the `scan` report first.
-- Videos are compared by a handful of frames and their duration; two different videos with the
-  same duration and a nearly black/white look could be confused: lower `--video-threshold`.
-- Exact-duplicate detection is byte-for-byte reliable.
+---
 
-## How it relates to other tools
-
-TwinFinder is a small, scriptable, MIT-licensed take on ideas proven by
-[fclones](https://github.com/pkolaczk/fclones) (staged hashing),
-[Czkawka](https://github.com/qarmin/czkawka) and
-[dupeGuru](https://github.com/arsenetar/dupeguru) (similar images/videos),
-[imagededup](https://github.com/idealo/imagededup) (perceptual hashing) and
-[VideoCull](https://github.com/StippieDot/VideoCull) (video de-duplication). **No code was copied**
-from them; they are excellent, and for huge libraries or a GUI you should look at them too.
-
-## Tests
+## 🧪 Development & Testing
 
 ```bash
-pip install -e ".[dev]" && pytest      # video tests need ffmpeg and skip without it
+git clone https://github.com/Kaio-Comk/twinfinder.git
+cd twinfinder
+
+python -m venv .venv
+.venv\Scripts\activate
+
+pip install -e ".[dev,all]"
+pytest
 ```
 
-## License
+---
 
-MIT
+## 📄 License
+
+Distributed under the **MIT License**. See `LICENSE` for details.
+
+<div align="center">
+  <sub>Built with ❤️ by Kaio Lima. If TwinFinder helped you recover storage, please give it a ⭐!</sub>
+</div>

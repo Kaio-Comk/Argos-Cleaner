@@ -18,3 +18,5 @@ twinfinder-quarantine/
 build/
 dist/
 *.spec
+patch_*.py
+fix_*.py
