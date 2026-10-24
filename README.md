@@ -61,7 +61,9 @@ flowchart TD
     Scan -->|--similar-videos| FFmpeg["🎬 FFmpeg 5-Frame Temporal Fingerprint"]
     FFmpeg --> VidGroup["🎥 Similar Videos Group"]
     
-    ExactGroup & SimGroup & VidGroup --> Safety["🛡️ Quarantine Folder / System Recycle Bin"]
+    ExactGroup --> Safety
+    SimGroup --> Safety
+    VidGroup --> Safety["🛡️ Quarantine Folder / System Recycle Bin"]
 ```
 
 ---
