@@ -1,6 +1,6 @@
 [project]
 name = "twinfinder"
-version = "0.3.0"
+version = "0.4.0"
 description = "Find duplicate photos and videos by content (exact and similar) and clean them up safely"
 readme = "README.md"
 requires-python = ">=3.10"

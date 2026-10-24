@@ -30,9 +30,14 @@
 
 ---
 
+> [!NOTE]
+> **Branding & Identity:** **Argos-Cleaner** is the open-source repository name. **TwinFinder** is the portable Windows desktop executable distribution (`TwinFinder.exe`).
+
+---
+
 ## 💻 Windows App (No Python Required)
 
-1. Download **`TwinFinder.exe`** from the [Latest GitHub Release](https://github.com/Kaio-Comk/twinfinder/releases/latest).
+1. Download **`TwinFinder.exe`** from the [Latest GitHub Release](https://github.com/Kaio-Comk/Argos-Cleaner/releases/latest).
 2. Launch the application (features modern Sun Valley theme with dark/light mode support).
 3. Follow the intuitive 4-step wizard:
    * **Step 1:** Select folders to scan.
